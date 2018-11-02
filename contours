@@ -1,0 +1,114 @@
+def findOutlines(img,surface,circles,threshold = 60,minArea=1800,aspect_max = 20,rad1=0,rad2=0,leftedge=136,rightedge=1120,showImg=False,debug=False,saveImg=False,fname2=''):
+    # Detect edges using Canny
+    #img = cv2.adaptiveThreshold(img,255,cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY,31, 11)
+    print('outlines')
+    
+    
+    img=adjust_gamma(img,gamma=1.35)
+    
+    canny_output = cv2.Canny(img, threshold, 250)
+    
+    kernel = np.ones((3,3),np.uint8)
+    canny_output = cv2.dilate(canny_output,kernel,iterations = 1)
+    
+    #showPic(canny_output)
+    # Find contours
+    _, contours, _ = cv2.findContours(canny_output, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
+    #for contour in contours:
+    
+    #join close by contours
+    #find begin and end of contours
+    
+    
+    
+    drawing = np.zeros((canny_output.shape[0], canny_output.shape[1], 3), dtype=np.uint8)
+    drawing2=drawing.copy()
+    for contour in range(len(contours)):
+        #color = (255,255,255)
+        color=random_color()
+        cv2.drawContours(drawing, contours, contour, color,4)
+    if debug and showImg:
+        showPic(drawing)
+    
+    hull_list = []
+    for i in range(len(contours)):
+        # check for connections
+        
+        hull = cv2.convexHull(contours[i])
+        if debug == True:
+            color=random_color()
+        
+            #Remove smaller outlines
+            #cv2.drawContours(drawing2,[hull],0,color,4)
+    
+        
+        
+        
+        if cv2.contourArea(hull) > minArea:
+            x,y,w,h = cv2.boundingRect(contours[i])
+            aspect_ratio1 = float(w)/float(h)
+            aspect_ratio2 = float(h)/float(w)
+            if aspect_ratio2 > aspect_ratio1:
+                aspect = aspect_ratio2
+            else:
+                aspect = aspect_ratio1
+            
+            if aspect < aspect_max:
+                M = cv2.moments(contours[i]) 
+                cy = int(M['m01']/M['m00'])
+                cx = int(M['m10']/M['m00'])
+                if cy < (surface-10):
+                    if cy > surface - 500:
+                        if cx < rightedge:
+                            if cx > leftedge:
+                                hull_list.append(i)
+    
+    
+
+    
+    
+    if len(hull_list) > 1:
+        for i in range(len(hull_list)-1):
+            if i==0:
+                contours2 = np.vstack((contours[hull_list[0]],contours[hull_list[1]]))
+            else:
+                contours2 = np.vstack((contours2,contours[hull_list[i+1]]))
+    else:
+        contours2 = contours[hull_list[0]]
+        
+    xdata = []
+    ydata = []
+    
+    for i in range(np.shape(contours2)[0]):
+        xdata.append(contours2[i][0][0])
+        ydata.append(contours2[i][0][1])
+    
+    xc,yc,rc=leastsq_circle(xdata,ydata)
+    print(rc)
+    circles2 = np.ndarray((1,1,3))
+
+    circles2[0][0][0] = xc
+    circles2[0][0][1] = yc
+    circles2[0][0][2] = rc
+
+
+
+    for i in range(len(contours2)):
+        color=(255,255,255)
+        cv2.drawContours(drawing2, contours2, i, color,4)
+        
+    #circles2 = cv2.HoughCircles(drawing2[:,:,0],cv2.HOUGH_GRADIENT,1,160,param1=p1,param2=p2,minRadius=140,maxRadius=180)
+    if debug and showImg:
+        img2=img.copy()
+        cv2.circle(img2,(int(circles2[0][0][0]),int(circles2[0][0][1])), int(circles2[0][0][2]),(255,0,0),4)
+        showPic(drawing2)
+        showPic(img2)
+    
+    drawing=drawing[:,:,2]
+    
+    if showImg==True:
+        showPic(drawing,name='canny')
+    if saveImg==True:
+        #print(fname2)
+        cv2.imwrite(fname2, drawing)
+    return drawing2[:,:,0],circles2

@@ -9,27 +9,27 @@ import matplotlib.pyplot as plt
 basepath='/media/ppzmis/data/BouncingBall_Data/newMovies/ProcessedData/xpos_msd/'
 
 #filename = filedialog.askopenfilename(initialdir=basepath,title='Select Data File', filetypes = (('CSVS', '*.csv'),))
-filename = basepath + 'P800_077_data_finaldata_msdvals.csv'
+filename = basepath + '10mmP120_045_data_finaldata_msdvals_errors.csv'
 print(filename)
 data_to_be_fitted = np.loadtxt(filename, delimiter=',',skiprows=1)
 bins = data_to_be_fitted[:, 2]
 prob = data_to_be_fitted[:, 3]
 
 
-velocities = np.random.normal(0,0.8,10000000)
-r_omega = np.random.normal(0,5*0.159,10000000)
+#velocities = np.random.normal(0,0.8,10000000)
+#r_omega = np.random.normal(0,5*0.159,10000000)
 
-combo = -velocities/r_omega
+#combo = -velocities/r_omega
 
-freq,bin_edges = np.histogram(combo, bins = 31,range=(-5,5))
-bins = (bin_edges[:-1] + bin_edges[1:])/2
-fig = plt.figure()#filename + param + '_histogram')
-fig.suptitle('')
-plt.plot(bins,freq,'r-')
-plt.plot(bins,freq,'bx')
-plt.show()
+#freq,bin_edges = np.histogram(combo, bins = 31,range=(-5,5))
+#bins = (bin_edges[:-1] + bin_edges[1:])/2
+#fig = plt.figure()#filename + param + '_histogram')
+#fig.suptitle('')
+#plt.plot(bins,prob,'r-')
+#plt.plot(bins,prob,'bx')
+#plt.show()
 logic = prob > np.log10(0.002)
-logic2 = bins < np.log10(0.06)
+logic2 = bins < np.log10(0.4)
 logic3 = logic * logic2
 print(logic3)
 

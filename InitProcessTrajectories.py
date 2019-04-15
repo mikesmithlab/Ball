@@ -111,7 +111,7 @@ if __name__ == '__main__':
     
     dotlist = ball.particle.unique().flatten()   
     #Remove marks on cell which only move with the cell and are nothing to do with the ball.
-    #ball=removeStaticPoints(ball)    
+    ball=removeStaticPoints(ball)
     
     newdotlist = ball.particle.unique().flatten()   
     

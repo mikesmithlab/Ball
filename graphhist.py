@@ -37,22 +37,23 @@ def changes(ball,filename,param,exclude_wall = True):
 def histogram(values,filename,param,num_bins=15,range_data=False,symmetric=True,save=True):
     print(values.max())
     print(values.min())
-    if symmetric == True:
-        std=values.std()
-        range_data = (-3*std,3*std)   
+    #if symmetric == True:
+    #    std=values.std()
+    #range_data = (values.min(), values.max())
         
        
-    if (range_data == False) and (symmetric == False):
-        freq,bin_edges = np.histogram(values, bins = num_bins)
-    else:
-        freq,bin_edges = np.histogram(values, bins = num_bins,range=range_data)
+    #if (range_data == False) and (symmetric == False):
+    #    freq,bin_edges = np.histogram(values, bins = num_bins)
+    #else:
+    freq,bin_edges = np.histogram(values, bins = num_bins,range=range_data)
     bins = (bin_edges[:-1] + bin_edges[1:])/2
+    freq = freq / (np.shape(values)[0] * (bin_edges[2] - bin_edges[1]))
     fig = plt.figure()#filename + param + '_histogram')
     fig.suptitle(np.shape(values))
     plt.plot(bins,freq,'r-')
     plt.plot(bins,freq,'bx')
     
-    freq = freq / (np.shape(values)[0]*(bin_edges[2]-bin_edges[1]))
+
     if save:
         #plt.savefig(filename + param +'.png')
         
@@ -100,12 +101,13 @@ if __name__ == '__main__':
 
     #Load dataframe
     #filename = filedialog.askopenfilename(initialdir='/media/ppzmis/data/BouncingBall_Data/newMovies/ProcessedData/finalProcessed/',title='Select Data File', filetypes = (('DataFrames', '*finaldata.hdf5'),))    
-    basepath='/media/ppzmis/data/BouncingBall_Data/newMovies/ProcessedData/finalProcessed/*'
+    basepath='/media/ppzmis/data/BouncingBall_Data/newMovies/ProcessedData/finalProcessed12_5mm/*'
+    #basepath = '/media/ppzmis/data/BouncingBall_Data/newMovies/ProcessedData/finalProcessed_new10mm/*'
     
-    #names = ['800_050','400_050','240_050','120_050','80_050','800_077','800_062','800_040','400_077','400_062','400_040','240_077','240_062','240_040','120_077','120_062','120_040','80_077','80_062','80_040']
-    names = ['P80_077']
+    names = ['P120_045']
+    #names = ['P120_090']
     pathnames = [basepath + name + '_data_finaldata.hdf5' for name in names]
-    param = 'xVelMM'
+    param = 'omega_k'
     #each path get the 3 files for a particular experiment.
     for path in pathnames:
         
@@ -117,12 +119,23 @@ if __name__ == '__main__':
         filename_op = min(filenames)[:-5]
         if '_040' in filename_op:
             acceleration = 1.9
+        elif '045' in filename_op:
+            # 2.05
+            acceleration = 2.05
         elif '_050' in filename_op:
             acceleration = 2.25
+        elif '054' in filename_op:
+            # 2.381g
+            acceleration = 2.381
         elif '_062' in filename_op:
             acceleration = 2.75
-        else:
+        elif '_069' in filename_op:
+            acceleration = 3.01
+        elif '_077' in filename_op:
             acceleration = 3.25
+        else:
+            #0.9
+            acceleration = 3.6
                 
         if 'P80_' in filename_op:
             roughness = 201.0
@@ -138,13 +151,15 @@ if __name__ == '__main__':
             
         for i,filename in enumerate(filenames):
             
-            
+            print(filename)
             data = pd.read_hdf(filename)
             diffs, time_bounces = changes(data, filename_op + 'changes', param)
 
             if param == 'vx_over_r_omegak':
                 vals = -data['xVelMM'].values/(5*data['omega_k'].values)
             else:
+                print('here')
+                print(data[param].std())
                 vals = data[param].values
             filename_op2 = filename[:-5]
 
@@ -176,15 +191,15 @@ if __name__ == '__main__':
         np.savetxt(filename_op + param + 'calcvals.csv', output, fmt='%.3f', delimiter=',', header=" roughness, acceleration, std,+-, mean,+,-")
         np.savetxt(filename_op + param + 'meancalcvals.csv',output2, fmt='%.3f', delimiter=',', header=" roughness, acceleration, std,+-, mean,+,-")
         
-        print(np.shape(changevals))
+        print(np.shape(datavals))
         
                 
-        #histogram(datavals,filename_op,param,range_data=(-5,5),symmetric=False)
-        histogram(changevals, filename_op + '_changes_', param)
+        histogram(datavals,filename_op,param,range_data=(-2,2),symmetric=False)
+        #histogram(changevals, filename_op + '_changes_', param)
         
-        plt.figure()
-        plt.plot(timevals,changevals,'rx')
-        plt.show()
+        #plt.figure()
+        #plt.plot(timevals,changevals,'rx')
+    plt.show()
         
     
     

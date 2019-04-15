@@ -378,21 +378,31 @@ def calc_aggregate_quantities(b,FrameRate=500.0,maxZ = 10.0):
     return data
 
 def calibrate_surface(ball,AccVolt=0):
-    
-    #calibrate motion of surface.
-    #These values are obtained from an average of the mean height of 
-    if '040' in AccVolt:
-        #1.9g
+    # calibrate motion of surface.
+    if AccVolt == 0.4:
+        # 1.9g
         Amp = 0.1888
-    elif '050' in AccVolt:
-        #2.2g
+    elif AccVolt == 0.45:
+        # 2.05
+        Amp = 0.2052
+    elif AccVolt == 0.5:
+        # 2.2g
         Amp = 0.2187
-    elif '062' in AccVolt:
-        #2.75g
+    elif AccVolt == 0.54:
+        # 2.381g
+        Amp = 0.2369
+    elif AccVolt == 0.62:
+        # 2.75g
         Amp = 0.2733
-    elif '077' in AccVolt:
-        #3.25g
+    elif AccVolt == 0.7:
+        # 3.01
+        Amp = 0.2998
+    elif AccVolt == 0.77:
+        # 3.25g
         Amp = 0.3230
+    elif AccVolt == 0.90:
+        # 3.6g
+        Amp = 0.3581
     else:
         print('Acceleration not recognised')
     

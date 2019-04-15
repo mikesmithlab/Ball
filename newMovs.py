@@ -22,14 +22,16 @@ def subtractBkg(img,foldername,showImg=False):
     surface_index = int(findSurface(img))
 
     #showSurface(img,findSurface(img))
-    
+
     name = foldername[:-5] +'bkgimgs/' + str(int(surface_index)) +'.png'
+    print('test')
     print(name)
     bkg_img = cv2.imread(name,cv2.IMREAD_GRAYSCALE)
-    
+    if bkg_img is None:
+        bkg_img = cv2.imread(foldername[:-5] +'bkgimgs/' + '633.png', cv2.IMREAD_GRAYSCALE)
     bkg_img = cv2.GaussianBlur(bkg_img,(5,5),0)
-    #img2 = cv2.subtract(img[:,:,0],bkg_img)
-    img2 = cv2.GaussianBlur(img,(5,5),0)
+    img2 = cv2.subtract(img[:,:,0],bkg_img)
+    #img2 = cv2.GaussianBlur(img,(5,5),0)8mmballbP120_050.avi
     if showImg==True:
         showPic(img2)
     
@@ -38,7 +40,6 @@ def subtractBkg(img,foldername,showImg=False):
 def random_color():
     color = (np.random.randint(32,high=255),(np.random.randint(32,high=255)),(np.random.randint(32,high=255)))
     return color
-
 
 
 
@@ -70,39 +71,50 @@ def leastsq_circle(x,y):
     #residu   = np.sum((Ri - R)**2)
     return xc, yc, R
 
-def findOutlines(img,surface,circles,threshold = 40,minArea=1000,aspect_max = 150,rad1=0,rad2=0,leftedge=136,rightedge=1120,showImg=False,debug=False,saveImg=False,fname2=''):
+
+def findOutlines(img,surface,circles,threshold = 85,minArea=1200,aspect_max = 150,top=490,leftedge=116,rightedge=1105,showImg=False,debug=False,saveImg=False,fname2=''):
     # Detect edges using Canny
     #img = cv2.adaptiveThreshold(img,255,cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY,31, 11)
 
     print('outlines')
     
     
-    img=adjust_gamma(img,gamma=1.1)
-    showPic(img)
+    img=adjust_gamma(img,gamma=1.2)
+    #showPic(img)
 
-    canny_output = cv2.Canny(img, threshold, 250)
-    showPic(canny_output)
+    canny_output = cv2.Canny(img, threshold, 150)
+
+    canny_output[:surface-top,:] =0
+    canny_output[surface - 40:,:]=0
+    canny_output[:,rightedge:]=0
+    canny_output[:,:leftedge]=0
+    
+    #showPic(canny_output)
     kernel = np.ones((3,3),np.uint8)
-    canny_output = cv2.dilate(canny_output,kernel,iterations = 1)
+    #canny_output=cv2.morphologyEx(canny_output, cv2.MORPH_CLOSE, kernel)
+    canny_output = cv2.dilate(canny_output,kernel,iterations = 2)
+    #canny_output = cv2.erode(canny_output, kernel, iterations=1)
+
     
     #showPic(canny_output)
     # Find contours
     _, contours, _ = cv2.findContours(canny_output, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
-    #for contour in contours:
-    
-    #join close by contours
-    #find begin and end of contours
-    
-    
+
     
     drawing = np.zeros((canny_output.shape[0], canny_output.shape[1], 3), dtype=np.uint8)
     drawing2=drawing.copy()
-    for contour in range(len(contours)):
-        #color = (255,255,255)
-        color=random_color()
-        cv2.drawContours(drawing, contours, contour, color,4)
+    #for contour in range(len(contours)):
+    #    #color = (255,255,255)
+    #    color=random_color()
+    #    cv2.drawContours(drawing, contours, contour, color,4)
+
     if debug and showImg:
-        showPic(drawing)
+        showPic(canny_output)
+        #showPic(drawing)
+
+
+
+
     
     hull_list = []
     for i in range(len(contours)):
@@ -113,29 +125,30 @@ def findOutlines(img,surface,circles,threshold = 40,minArea=1000,aspect_max = 15
             color=random_color()
         
             #Remove smaller outlines
-            #cv2.drawContours(drawing2,[hull],0,color,4)
+            cv2.drawContours(drawing,[hull],0,color,4)
     
         
         
         
         if cv2.contourArea(hull) > minArea:
-            x,y,w,h = cv2.boundingRect(contours[i])
-            aspect_ratio1 = float(w)/float(h)
-            aspect_ratio2 = float(h)/float(w)
-            if aspect_ratio2 > aspect_ratio1:
-                aspect = aspect_ratio2
-            else:
-                aspect = aspect_ratio1
+            #x,y,w,h = cv2.boundingRect(contours[i])
+            #aspect_ratio1 = float(w)/float(h)
+            #aspect_ratio2 = float(h)/float(w)
+            #if aspect_ratio2 > aspect_ratio1:
+            #    aspect = aspect_ratio2
+            #else:
+            #    aspect = aspect_ratio1
             
-            if aspect < aspect_max:
-                M = cv2.moments(contours[i]) 
-                cy = int(M['m01']/M['m00'])
-                cx = int(M['m10']/M['m00'])
-                if cy < (surface-10):
-                    if cy > surface - 500:
-                        if cx < rightedge:
-                            if cx > leftedge:
-                                hull_list.append(i)
+            #if aspect < aspect_max:
+            hull_list.append(i)
+            '''M = cv2.moments(contours[i]) 
+            cy = int(M['m01']/M['m00'])
+            cx = int(M['m10']/M['m00'])
+            if cy < (surface-60):
+            if cy > surface - 500:
+            if cx < rightedge:
+            if cx > leftedge:
+            '''
     
     
 
@@ -156,32 +169,54 @@ def findOutlines(img,surface,circles,threshold = 40,minArea=1000,aspect_max = 15
     for i in range(np.shape(contours2)[0]):
         xdata.append(contours2[i][0][0])
         ydata.append(contours2[i][0][1])
-    
+    xdata = np.array(xdata)
+    ydata = np.array(ydata)
+
+    #indices=np.where((ydata < (surface-40)) & (ydata > (surface - top)) & (xdata > leftedge) & (xdata < rightedge))[0]
+    #print(indices)
+
+
+
     xc,yc,rc=leastsq_circle(xdata,ydata)
     print(rc)
     circles2 = np.ndarray((1,1,3))
 
-    circles2[0][0][0] = xc
-    circles2[0][0][1] = yc
-    circles2[0][0][2] = rc
+    xdata1=xdata[((xdata-xc)**2 + (ydata-yc)**2 > (rc-9)**2) & ((xdata-xc)**2 + (ydata-yc)**2 < (rc+18)**2)]
+    ydata1 = ydata[((xdata - xc) ** 2 + (ydata - yc) ** 2 > (rc - 9) ** 2) & ((xdata-xc)**2 + (ydata-yc)**2 < (rc+18)**2)]
+
+
+    xc1, yc1, rc1 = leastsq_circle(xdata1, ydata1)
+
+    circles2[0][0][0] = xc1
+    circles2[0][0][1] = yc1
+    circles2[0][0][2] = rc1
 
 
 
     for i in range(len(contours2)):
         color=(255,255,255)
         cv2.drawContours(drawing2, contours2, i, color,4)
+
+
         
     #circles2 = cv2.HoughCircles(drawing2[:,:,0],cv2.HOUGH_GRADIENT,1,160,param1=p1,param2=p2,minRadius=140,maxRadius=180)
     if debug and showImg:
+        pic = np.zeros((canny_output.shape[0], canny_output.shape[1], 3), dtype=np.uint8)
+        pic[ydata1, xdata1, :] = 255
+        cv2.circle(pic, (int(xc), int(yc)), int(rc - 5), (255, 255, 0), 2)
+        cv2.circle(pic, (int(xc), int(yc)), int(rc + 12), (0, 255, 255), 2)
+        showPic(pic, 'final')
         img2=img.copy()
         cv2.circle(img2,(int(circles2[0][0][0]),int(circles2[0][0][1])), int(circles2[0][0][2]),(255,0,0),4)
         showPic(drawing2)
-        showPic(img2)
+        #showPic(img2)
     
-    drawing=drawing[:,:,2]
+    #drawing=drawing[:,:,2]
     
     if showImg==True:
-        showPic(drawing,name='canny')
+        cv2.circle(canny_output, (int(xc), int(yc)), int(rc - 9), (255, 255, 255), 2)
+        cv2.circle(canny_output, (int(xc), int(yc)), int(rc + 18), (255, 255, 255), 2)
+        showPic(canny_output,name='canny')
     if saveImg==True:
         #print(fname2)
         cv2.imwrite(fname2, drawing)
@@ -387,7 +422,7 @@ def findSurface(image, binthreshold=20,surfthreshold=300000,surfaceShift=0, show
 def findBall(image,surface,circles,minRad=150,maxRad=165,fname='',showImg=False,saveImg=False,debug2=False):
     
     
-    img2,circles=findOutlines(image,surface,circles,rad1=minRad,rad2=maxRad,showImg=showImg,saveImg=False,fname2=fname,debug=debug2)
+    img2,circles=findOutlines(image,surface,circles,showImg=showImg,saveImg=False,fname2=fname,debug=debug2)
     
     showImg=False
     if showImg==True:
@@ -495,17 +530,20 @@ def findBallDots(img,circles,showAll = False, framenum=0,foldername='',showImg=F
 
 
 if __name__ == "__main__":
-    skipNFrames =1
+    skipNFrames =1433
     skipEveryNth = 1#works only in test mode
-    stopFrame = False
-    
+    stopFrame = 1433
+
     debug=True
+
     showdebugging = True
    
     #Load Video
     #filename = filedialog.askopenfilename(initialdir='/media/ppzmis/data/BouncingBall_Data/newMovies/RawDataandTracking/',title='Select Data File', filetypes = (('AVI', '*.avi'),))    
-    
-    filename = '/media/ppzmis/data/BouncingBall_Data/newMovies/RawDataandTracking/8mm_ball/P120/8mmballbP120_077.avi'
+
+    filename = '/media/ppzmis/data/BouncingBall_Data/newMovies/RawDataandTracking/acc_045/8mm_bP120_045.avi'
+
+    #filename = '/media/ppzmis/data/BouncingBall_Data/newMovies/RawDataandTracking/8mm_ball/P120/8mmballbP120_062.avi'
     print(filename)
     filename2 = filename[:-4] + '_bkg.avi'
     
@@ -567,14 +605,15 @@ if __name__ == "__main__":
         if n==(skipNFrames):#Sometimes the first frame is dodgy so best to check fit on 2nd frame
             ball, trackedFrame,circles = findBallDots(img,circles,framenum=n, foldername = new_folder,showImg=showdebugging,test=debug)
             if debug == True:
-                    op = filename[:-12] + str(n) + '.hdf5'
+
+                    op = filename[:-17] + str(n) + '.hdf5'
                     ball.to_hdf(op,'w')
             #print(ball)   
         elif n>skipNFrames:
             try:
                 ball_temp, trackedFrame,circles, = findBallDots(img,circles,framenum=n, foldername = new_folder,showImg=showdebugging,test=debug)
                 if debug == True:
-                    op = filename[:-12] + str(n) + '.hdf5'
+                    op = filename[:-17] + str(n) + '.hdf5'
                     ball_temp.to_hdf(op,'w')
                 #Add results to dataFrame
                 ball = pd.concat([ball, ball_temp])

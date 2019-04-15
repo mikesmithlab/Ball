@@ -58,10 +58,10 @@ if __name__ == '__main__':
     filename2 = filedialog.askopenfilename(initialdir='//media/ppzmis/data/BouncingBall_Data/newMovies/',title='Select Data File', filetypes = (('Datafile', '*.hdf5'),))    
     filename = filename2[:-10] + '_annotated.avi'
     print(filename2)
-    print(filename[:-23])
+    print(filename[:-27])
     #list frames to be inserted. These should be saved in same folder and their names should just be the frame number.
-    filelist = glob.glob(filename[:-23] +'*.png')
-    
+    filelist = glob.glob(filename[:-27] +'*.png')
+
     #Create readVidObject
     original = cv2.VideoCapture(filename)
     width = original.get(3)
@@ -89,13 +89,15 @@ if __name__ == '__main__':
     
     
     #Extract initial portions
+    print(refitFrames[0])
     original, op_file = extractPortionVid(original,op_file,startVal=1,stopVal = refitFrames[0]-1)
 
     ball_temp = extractPortionDFrame(ball,startVal = 0,stopVal = refitFrames[0])
     
     for i in range(np.shape(refitFrames)[0]):
         #read frame of data
-        ball_frame = pd.read_hdf(path + '/c' + str(refitFrames[i]) +'.hdf5')
+        print(path +'/'+ str(refitFrames[i]) +'.hdf5')
+        ball_frame = pd.read_hdf(path + '/'+ str(refitFrames[i]) +'.hdf5')
         #append to df
 
         ball_temp=insertFrameToDF(ball_temp,ball_frame)

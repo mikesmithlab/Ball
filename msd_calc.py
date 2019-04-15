@@ -23,16 +23,17 @@ def msd(data_frame,fps=500.0,max_t=2.0,show=False):
 if __name__ == '__main__':
     # Load dataframe
     # filename = filedialog.askopenfilename(initialdir='/media/ppzmis/data/BouncingBall_Data/newMovies/ProcessedData/finalProcessed/',title='Select Data File', filetypes = (('DataFrames', '*finaldata.hdf5'),))
-    basepath = '/media/ppzmis/data/BouncingBall_Data/newMovies/ProcessedData/finalProcessed/*'
-
-    names = ['800_050','400_050','240_050','120_050','80_050','800_077','800_062','800_040','400_077','400_062','400_040','240_077','240_062','240_040','120_077','120_062','120_040','80_077','80_062','80_040']
+    basepath = '/media/ppzmis/data/BouncingBall_Data/newMovies/ProcessedData/finalProcessed_new10mm/*'
+    names = ['P120_045']
+    #names = ['800_050','400_050','240_050','120_050','80_050','800_077','800_062','800_040','400_077','400_062','400_040','240_077','240_062','240_040','120_077','120_062','120_040','80_077','80_062','80_040']
     #names = ['P80_077']
     pathnames = [basepath + name + '_data_finaldata.hdf5' for name in names]
     # each path get the 3 files for a particular experiment.
+    print(pathnames)
     for path in pathnames:
 
         filenames = get_files_directory(path, full_filenames=True)
-
+        print(filenames)
         # Read dataframe from file
         msd_av = np.array([])
         filename_op = min(filenames)[:-5]
@@ -45,12 +46,13 @@ if __name__ == '__main__':
             elif i ==1:
                 msd_av = (msd_av + msd_val)
             elif i == 2:
-                msd_av = (msd_av + msd_val)/3
+                pass#msd_av = (msd_av + msd_val)/3
 
         log_lags = np.log10(lags)
         log_msd_av = np.log10(msd_av)
 
         output =np.c_[lags, msd_av, log_lags, log_msd_av]
-        np.savetxt(filename_op + '_msdvals.csv', output, fmt='%.3f', delimiter=',',
+        np.savetxt(filename_op + '_msdvals_errors.csv', output, fmt='%.3f', delimiter=',',
                    header=" lags, msd_vals. log_lags, log_msd")
+        print(filename_op+'_msdvals.csv')
     plt.show()

@@ -98,12 +98,20 @@ def smoothBallTrajectory(ball,filename,show=False,no_bounces=False):
     if 'P80' in filename:
         surfaceZero = 384.7
     elif 'P120' in filename:
-        surfaceZero = 387.7
+        #This is for first set of 10mm movies
+        #surfaceZero = 387.7
+        #This is for additionals movies with 10mm
+        #surfaceZero = 449.8
+        #This is for 8mm
+        surfaceZero = 479.4
+        #This is for 12.5mm
+        #surfaceZero = 405.6
     elif 'P240' in filename:
         surfaceZero = 412.7
     elif 'P400' in filename:
         surfaceZero = 394.9
     else:
+        'P800'
         surfaceZero = 416.3
     
     
@@ -132,14 +140,18 @@ def smoothBallTrajectory(ball,filename,show=False,no_bounces=False):
     ball['bounce']=b['bounce']
     ball['peak']=b['peak']
     ball['wall']=b2['wall']
-    #surfaceZero = ball[ball['bounce']==True]['yball'].mean()
+    surfaceZero2 = ball[ball['bounce']==True]['yball'].mean()
+    print(surfaceZero2)
+    print('yball')
+    print(ball[ball['bounce']==True]['yball'].mean())
         
     ball['yball'] = surfaceZero - ball['yball'] # flip values so positive y is up and relative to surface
+    ball['y'] = surfaceZero - ball['y']
     #All values are in pixels at this point.
 
     return ball
 
-def dotCalc(ball_track,folder,no_bounces=False,FrameRate=500.0,RadBallInMM=5.0,show=False):
+def dotCalc(ball_track,folder,no_bounces=False,FrameRate=500.0,RadBallInMM=4.0,show=False):
     '''
     Calculate the relative positions of a single dot to centre
     Sign convention and labels phi and theta follows diagram here: http://dynref.engr.illinois.edu/rvs.html#rvs-ew-d
@@ -166,7 +178,11 @@ def dotCalc(ball_track,folder,no_bounces=False,FrameRate=500.0,RadBallInMM=5.0,s
     #Calc relative coordinates   
     ball_track['Relx'] = ball_track.loc[:,'x'] - ball_track.loc[:,'xball']
     ball_track['Rely'] = ball_track.loc[:,'y'] - ball_track.loc[:,'yball']
-    
+
+
+    if ball_track['Rely'].max() > ball_track['radball'].max():
+        print('found one')
+
     if show:
         plt.figure('Rel')
         plt.plot(ball_track[ball_track.index < 200]['Relx'],ball_track[ball_track.index < 200]['Rely'],color=colorval)
@@ -211,7 +227,7 @@ def dotCalc(ball_track,folder,no_bounces=False,FrameRate=500.0,RadBallInMM=5.0,s
     ball_track['dyballMM'] = np.gradient(ball_track['ballHeightMM'])
     
     #ball_track.to_csv('/media/ppzmis/data/BouncingBall_Data/newMovies/RawDataandTracking/Examples/test.csv')    
-    
+
     if show_plots:
         plotWithBounces(ball_track,'Relz')
         plotWithBounces(ball_track,'Relx')
@@ -246,7 +262,7 @@ def calcGradient(ball_track,param,grad_param):
 
     ball_track[grad_param] = 0
     for i in range(np.shape(bounce_idx)[0]-1):
-        ball_track.loc[(ball_track.index >= bounce_idx[i])&(ball_track.index < bounce_idx[i+1]),grad_param] = grad_vals[i]/frame_gaps_bounces[i]
+        ball_track.loc[(ball_track.index >= bounce_idx[i])&(ball_track.index < bounce_idx[i+1]),grad_param] = grad_vals[i]#/frame_gaps_bounces[i]
     ball_track.loc[bounce_idx[-1],grad_param] = grad_vals[-1]/frame_gaps_bounces[-1]
     return ball_track
         
@@ -296,7 +312,7 @@ def addBounceCol(ball,no_bounces=True):
     
     return ball
 
-def addNearWallCol(ball,edge = (200,1050)):
+def addNearWallCol(ball,edge = (140,1100)):
     #Adds logic column which identifies if xpos is near edge
     #True if near wall
     radius = ball['radball'].max()
@@ -344,7 +360,7 @@ def calc_aggregate_quantities(b,FrameRate=500.0,maxZ = 10.0):
     data['ballZMM'] = zScale*(ball.groupby(by='frame').mean()['radball'] - minR) - maxZ/2 # z=0 is the middle of the cell
     data=calcGradient(data,'ballZMM','zVelMM')
     
-    print(data['ballHeightMM'].mean())
+    #print(data['ballHeightMM'].mean())
     return data
 
 def calibrate_surface(ball,AccVolt=0):
@@ -354,16 +370,29 @@ def calibrate_surface(ball,AccVolt=0):
     if '040' in AccVolt:
         #1.9g
         Amp = 0.1888
+    elif '045' in AccVolt:
+        # 2.05
+        Amp = 0.2052
     elif '050' in AccVolt:
         #2.2g
         Amp = 0.2187
+    elif '054' in AccVolt:
+        # 2.381g
+        Amp = 0.2369
     elif '062' in AccVolt:
         #2.75g
         Amp = 0.2733
+    elif '069' in AccVolt:
+        # 3.01
+        Amp = 0.2998
     elif '077' in AccVolt:
         #3.25g
         Amp = 0.3230
+    elif '090' in AccVolt:
+        # 3.6g
+        Amp = 0.3581
     else:
+        print(filename)
         print('Acceleration not recognised')
     
     surface = ball.groupby(by='frame').mean()['surface']
@@ -391,8 +420,8 @@ if __name__ == '__main__':
     
     #Load dataframe
     #filename = filedialog.askopenfilename(initialdir='/media/ppzmis/data/BouncingBall_Data/newMovies/ProcessedData/InitProcessed/',title='Select Data File', filetypes = (('DataFrames', '*040_data_initialprocessed.hdf5'),))    
-    path = '/media/ppzmis/data/BouncingBall_Data/newMovies/ProcessedData/InitProcessed/*initialprocessed.hdf5'#*.initialprocessed.hdf5'
-    
+    path = '/media/ppzmis/data/BouncingBall_Data/newMovies/ProcessedData/InitProcessed_acc_045/8mm/*initialprocessed.hdf5'#*.initialprocessed.hdf5'
+
     file_list = get_files_directory(path)
     for filename in file_list:
         
@@ -408,7 +437,9 @@ if __name__ == '__main__':
     
         #Read dataframe from file
         ball = pd.read_hdf(filename)
-
+        print('range')
+        print(ball['xball'].max())
+        print(ball['xball'].min())
         
         
         #Calibrate surface height
@@ -431,12 +462,19 @@ if __name__ == '__main__':
     
         #
         #Calculate the linear and angular velocities and return simplified dataframe with only calibrated values
-    
+        print('b')
+
+        print(b['dphis'].max())
+
         data = calc_aggregate_quantities(b)
+
         print(filename)
-        print(data['ballHeightMM'].mean())
-    
-        plotWithBounces(data, 'ballHeightMM')
+        print(data['omega_j'].max())
+        print(data['omega_k'].max())
+        #print(data['ballHeightMM'].mean())
+
+        #plotWithBounces(data,'ballXMM')
+        #plotWithBounces(data, 'ballHeightMM')
         #plotWithBounces(data,'ballZMM')
         # plotWithBounces(data, 'ballXMM')
         #plotWithBounces(data, 'xVelMM')
@@ -446,7 +484,7 @@ if __name__ == '__main__':
         #plotWithBounces(data, 'omega_j')
         #plotWithBounces(data, 'omega_k')
         #plotWithBounces(data, 'surfaceHeightMM')
-        plt.show()
+        #plt.show()
     
        
     
@@ -455,7 +493,7 @@ if __name__ == '__main__':
         #save calibrated and aggergated dataframe to new file
         op_name = filename[:-22] + '_finaldata.hdf5'
         #print(op_name)
-        #data.to_hdf(op_name,'data')     
+        data.to_hdf(op_name,'data')
     
         #plt.show()
         print('analysis complete ')    

@@ -125,7 +125,7 @@ if __name__ == '__main__':
             #print(a + b + c + d + e)
             #param = 'ballHeightMM'
             #plotWithBounces(data,param)
-            #createHistogram(data,param,filename_op)
+            createHistogram(data,param,filename_op)
             #changes(data,filename_op+'changes',param)
             #plt.show()
     

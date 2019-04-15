@@ -23,15 +23,27 @@ def calibrate_values(ball,FrameRate=500,RadBallInMM=0,AccVolt=0):
     if AccVolt == 0.4:
         #1.9g
         Amp = 0.1888
+    elif AccVolt == 0.45:
+        #2.05
+        Amp = 0.2052
     elif AccVolt == 0.5:
         #2.2g
         Amp = 0.2187
+    elif AccVolt == 0.54:
+        #2.381g
+        Amp = 0.2369
     elif AccVolt == 0.62:
         #2.75g
         Amp = 0.2733
+    elif AccVolt == 0.7:
+        #3.01
+        Amp = 0.2998
     elif AccVolt == 0.77:
         #3.25g
         Amp = 0.3230
+    elif AccVolt == 0.90:
+        #3.6g
+        Amp = 0.3581
     else:
         print('Acceleration not recognised')
     
